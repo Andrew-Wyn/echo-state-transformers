@@ -142,6 +142,13 @@ _import_structure = {
         "BertTokenizer",
         "WordpieceTokenizer",
     ],
+    "models.resbert": [
+        "RESBERT_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "BasicTokenizer",
+        "ResbertConfig",
+       
+        "WordpieceTokenizer",
+    ],
     "models.bert_generation": ["BertGenerationConfig"],
     "models.bert_japanese": ["BertJapaneseTokenizer", "CharacterTokenizer", "MecabTokenizer"],
     "models.bertweet": ["BertweetTokenizer"],
@@ -798,6 +805,23 @@ else:
             "BertModel",
             "BertPreTrainedModel",
             "load_tf_weights_in_bert",
+        ]
+    )
+    _import_structure["models.resbert"].extend(
+        [
+            "RESBERT_PRETRAINED_MODEL_ARCHIVE_LIST",
+            "ResbertForMaskedLM",
+            "ResbertForMultipleChoice",
+            "ResbertForNextSentencePrediction",
+            "ResbertForPreTraining",
+            "ResbertForQuestionAnswering",
+            "ResbertForSequenceClassification",
+            "ResbertForTokenClassification",
+            "ResbertLayer",
+            "ResbertLMHeadModel",
+            "ResbertModel",
+            "ResbertPreTrainedModel",
+            "load_tf_weights_in_resbert",
         ]
     )
     _import_structure["models.bert_generation"].extend(
@@ -1889,6 +1913,23 @@ else:
             "TFBertPreTrainedModel",
         ]
     )
+    _import_structure["models.resbert"].extend(
+        [
+            "TF_RESBERT_PRETRAINED_MODEL_ARCHIVE_LIST",
+            "TFResbertEmbeddings",
+            "TFResbertForMaskedLM",
+            "TFResbertForMultipleChoice",
+            "TFResbertForNextSentencePrediction",
+            "TFResbertForPreTraining",
+            "TFResbertForQuestionAnswering",
+            "TFResbertForSequenceClassification",
+            "TFResbertForTokenClassification",
+            "TFResbertLMHeadModel",
+            "TFResbertMainLayer",
+            "TFResbertModel",
+            "TFResbertPreTrainedModel",
+        ]
+    )
     _import_structure["models.blenderbot"].extend(
         ["TFBlenderbotForConditionalGeneration", "TFBlenderbotModel", "TFBlenderbotPreTrainedModel"]
     )
@@ -2405,6 +2446,20 @@ else:
             "FlaxBertPreTrainedModel",
         ]
     )
+    _import_structure["models.resbert"].extend(
+        [
+            "FlaxResbertForCausalLM",
+            "FlaxResbertForMaskedLM",
+            "FlaxResbertForMultipleChoice",
+            "FlaxResbertForNextSentencePrediction",
+            "FlaxResbertForPreTraining",
+            "FlaxResbertForQuestionAnswering",
+            "FlaxResbertForSequenceClassification",
+            "FlaxResbertForTokenClassification",
+            "FlaxResbertModel",
+            "FlaxResbertPreTrainedModel",
+        ]
+    )
     _import_structure["models.big_bird"].extend(
         [
             "FlaxBigBirdForCausalLM",
@@ -2630,6 +2685,13 @@ if TYPE_CHECKING:
         BasicTokenizer,
         BertConfig,
         BertTokenizer,
+        WordpieceTokenizer,
+    )
+    from .models.resbert import (
+        RESBERT_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        BasicTokenizer,
+        ResbertConfig,
+       
         WordpieceTokenizer,
     )
     from .models.bert_generation import BertGenerationConfig
@@ -3205,6 +3267,21 @@ if TYPE_CHECKING:
             BertModel,
             BertPreTrainedModel,
             load_tf_weights_in_bert,
+        )
+        from .models.resbert import (
+            RESBERT_PRETRAINED_MODEL_ARCHIVE_LIST,
+            ResbertForMaskedLM,
+            ResbertForMultipleChoice,
+            ResbertForNextSentencePrediction,
+            ResbertForPreTraining,
+            ResbertForQuestionAnswering,
+            ResbertForSequenceClassification,
+            ResbertForTokenClassification,
+            ResbertLayer,
+            ResbertLMHeadModel,
+            ResbertModel,
+            ResbertPreTrainedModel,
+            load_tf_weights_in_resbert,
         )
         from .models.bert_generation import (
             BertGenerationDecoder,
