@@ -142,10 +142,17 @@ _import_structure = {
         "BertTokenizer",
         "WordpieceTokenizer",
     ],
+<<<<<<< HEAD
     "models.resbert": [
         "RESBERT_PRETRAINED_CONFIG_ARCHIVE_MAP",
         "BasicTokenizer",
         "ResbertConfig",
+=======
+    "models.ubert": [
+        "UBERT_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "BasicTokenizer",
+        "UbertConfig",
+>>>>>>> eb9cc493b (initializated the structure of the model)
        
         "WordpieceTokenizer",
     ],
@@ -807,6 +814,7 @@ else:
             "load_tf_weights_in_bert",
         ]
     )
+<<<<<<< HEAD
     _import_structure["models.resbert"].extend(
         [
             "RESBERT_PRETRAINED_MODEL_ARCHIVE_LIST",
@@ -822,6 +830,23 @@ else:
             "ResbertModel",
             "ResbertPreTrainedModel",
             "load_tf_weights_in_resbert",
+=======
+    _import_structure["models.ubert"].extend(
+        [
+            "UBERT_PRETRAINED_MODEL_ARCHIVE_LIST",
+            "UbertForMaskedLM",
+            "UbertForMultipleChoice",
+            "UbertForNextSentencePrediction",
+            "UbertForPreTraining",
+            "UbertForQuestionAnswering",
+            "UbertForSequenceClassification",
+            "UbertForTokenClassification",
+            "UbertLayer",
+            "UbertLMHeadModel",
+            "UbertModel",
+            "UbertPreTrainedModel",
+            "load_tf_weights_in_ubert",
+>>>>>>> eb9cc493b (initializated the structure of the model)
         ]
     )
     _import_structure["models.bert_generation"].extend(
@@ -1913,6 +1938,7 @@ else:
             "TFBertPreTrainedModel",
         ]
     )
+<<<<<<< HEAD
     _import_structure["models.resbert"].extend(
         [
             "TF_RESBERT_PRETRAINED_MODEL_ARCHIVE_LIST",
@@ -1928,6 +1954,23 @@ else:
             "TFResbertMainLayer",
             "TFResbertModel",
             "TFResbertPreTrainedModel",
+=======
+    _import_structure["models.ubert"].extend(
+        [
+            "TF_UBERT_PRETRAINED_MODEL_ARCHIVE_LIST",
+            "TFUbertEmbeddings",
+            "TFUbertForMaskedLM",
+            "TFUbertForMultipleChoice",
+            "TFUbertForNextSentencePrediction",
+            "TFUbertForPreTraining",
+            "TFUbertForQuestionAnswering",
+            "TFUbertForSequenceClassification",
+            "TFUbertForTokenClassification",
+            "TFUbertLMHeadModel",
+            "TFUbertMainLayer",
+            "TFUbertModel",
+            "TFUbertPreTrainedModel",
+>>>>>>> eb9cc493b (initializated the structure of the model)
         ]
     )
     _import_structure["models.blenderbot"].extend(
@@ -2446,6 +2489,7 @@ else:
             "FlaxBertPreTrainedModel",
         ]
     )
+<<<<<<< HEAD
     _import_structure["models.resbert"].extend(
         [
             "FlaxResbertForCausalLM",
@@ -2458,6 +2502,20 @@ else:
             "FlaxResbertForTokenClassification",
             "FlaxResbertModel",
             "FlaxResbertPreTrainedModel",
+=======
+    _import_structure["models.ubert"].extend(
+        [
+            "FlaxUbertForCausalLM",
+            "FlaxUbertForMaskedLM",
+            "FlaxUbertForMultipleChoice",
+            "FlaxUbertForNextSentencePrediction",
+            "FlaxUbertForPreTraining",
+            "FlaxUbertForQuestionAnswering",
+            "FlaxUbertForSequenceClassification",
+            "FlaxUbertForTokenClassification",
+            "FlaxUbertModel",
+            "FlaxUbertPreTrainedModel",
+>>>>>>> eb9cc493b (initializated the structure of the model)
         ]
     )
     _import_structure["models.big_bird"].extend(
@@ -2687,10 +2745,17 @@ if TYPE_CHECKING:
         BertTokenizer,
         WordpieceTokenizer,
     )
+<<<<<<< HEAD
     from .models.resbert import (
         RESBERT_PRETRAINED_CONFIG_ARCHIVE_MAP,
         BasicTokenizer,
         ResbertConfig,
+=======
+    from .models.ubert import (
+        UBERT_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        BasicTokenizer,
+        UbertConfig,
+>>>>>>> eb9cc493b (initializated the structure of the model)
        
         WordpieceTokenizer,
     )
@@ -3268,6 +3333,7 @@ if TYPE_CHECKING:
             BertPreTrainedModel,
             load_tf_weights_in_bert,
         )
+<<<<<<< HEAD
         from .models.resbert import (
             RESBERT_PRETRAINED_MODEL_ARCHIVE_LIST,
             ResbertForMaskedLM,
@@ -3282,6 +3348,22 @@ if TYPE_CHECKING:
             ResbertModel,
             ResbertPreTrainedModel,
             load_tf_weights_in_resbert,
+=======
+        from .models.ubert import (
+            UBERT_PRETRAINED_MODEL_ARCHIVE_LIST,
+            UbertForMaskedLM,
+            UbertForMultipleChoice,
+            UbertForNextSentencePrediction,
+            UbertForPreTraining,
+            UbertForQuestionAnswering,
+            UbertForSequenceClassification,
+            UbertForTokenClassification,
+            UbertLayer,
+            UbertLMHeadModel,
+            UbertModel,
+            UbertPreTrainedModel,
+            load_tf_weights_in_ubert,
+>>>>>>> eb9cc493b (initializated the structure of the model)
         )
         from .models.bert_generation import (
             BertGenerationDecoder,
