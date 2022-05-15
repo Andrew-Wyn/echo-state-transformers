@@ -50,6 +50,7 @@ from ...utils import (
     logging,
     replace_return_docstrings,
 )
+from ..bert import BertLayer
 from .configuration_resbert import ResbertConfig
 
 
@@ -230,14 +231,16 @@ class ResbertEmbeddings(nn.Module):
 class ResbertSelfAttention(nn.Module):
     def __init__(self, config, position_embedding_type=None):
         super().__init__()
-        if config.hidden_size % config.num_attention_heads != 0 and not hasattr(config, "embedding_size"):
+        self.reservoir_size = (config.hidden_size * config.reservoir_scaling_factor) if config.reservoir_scaling_factor is not None else config.hidden_size
+        if self.reservoir_size % config.num_attention_heads != 0 and not hasattr(config, "embedding_size"):
             raise ValueError(
-                f"The hidden size ({config.hidden_size}) is not a multiple of the number of attention "
+                f"The reservoir size ({self.hidden_size}) is not a multiple of the number of attention "
                 f"heads ({config.num_attention_heads})"
             )
 
+        # TODO: I dont see the utility of this operations self.all_head_size = self.reservoir_size due to previous control
         self.num_attention_heads = config.num_attention_heads
-        self.attention_head_size = int(config.hidden_size / config.num_attention_heads)
+        self.attention_head_size = int(self.reservoir_size / config.num_attention_heads)
         self.all_head_size = self.num_attention_heads * self.attention_head_size
 
         self.query = nn.Linear(config.hidden_size, self.all_head_size)
@@ -358,14 +361,18 @@ class ResbertSelfAttention(nn.Module):
 class ResbertSelfOutput(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
-        self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
+        self.reservoir_size = config.hidden_size * config.reservoir_scaling_factor if not config.reservoir_scaling_factor is None else config.hidden_size
+        self.embed_reservoir = nn.Linear(config.hidden_size, self.reservoir_size)
+        self.dense = nn.Linear(self.reservoir_size, self.reservoir_size)
+        self.LayerNorm = nn.LayerNorm(self.reservoir_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, hidden_states: torch.Tensor, input_tensor: torch.Tensor) -> torch.Tensor:
         hidden_states = self.dense(hidden_states)
         hidden_states = self.dropout(hidden_states)
-        hidden_states = self.LayerNorm(hidden_states + input_tensor)
+        embedded_input = self.embed_reservoir(input_tensor)
+        hidden_states = self.LayerNorm(hidden_states + embedded_input)
+
         return hidden_states
 
 
@@ -423,7 +430,8 @@ class ResbertAttention(nn.Module):
 class ResbertIntermediate(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.dense = nn.Linear(config.hidden_size, config.intermediate_size)
+        self.reservoir_size = config.hidden_size * config.reservoir_scaling_factor if not config.reservoir_scaling_factor is None else config.hidden_size
+        self.dense = nn.Linear(self.reservoir_size, config.intermediate_size)
         if isinstance(config.hidden_act, str):
             self.intermediate_act_fn = ACT2FN[config.hidden_act]
         else:
@@ -439,14 +447,24 @@ class ResbertIntermediate(nn.Module):
 class ResbertOutput(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.dense = nn.Linear(config.intermediate_size, config.hidden_size)
-        self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
+
+        self.reservoir_size = config.hidden_size * config.reservoir_scaling_factor if not config.reservoir_scaling_factor is None else config.hidden_size
+
+        self.dense = nn.Linear(config.intermediate_size, self.reservoir_size)
+        self.LayerNorm = nn.LayerNorm(self.reservoir_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
+
+        # random projection to reduce the dimension
+        self.random_projection_matrix = torch.randn(config.hidden_size, self.reservoir_size)/config.hidden_size
+
 
     def forward(self, hidden_states: torch.Tensor, input_tensor: torch.Tensor) -> torch.Tensor:
         hidden_states = self.dense(hidden_states)
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
+
+        hidden_states = hidden_states @ self.random_projection_matrix.T
+
         return hidden_states
 
 
@@ -457,14 +475,18 @@ class ResbertLayer(nn.Module):
         self.chunk_size_feed_forward = config.chunk_size_feed_forward
         self.seq_len_dim = 1
         self.attention = ResbertAttention(config)
+        self.attention.requires_grad_(False)
         self.is_decoder = config.is_decoder
         self.add_cross_attention = config.add_cross_attention
         if self.add_cross_attention:
             if not self.is_decoder:
                 raise ValueError(f"{self} should be used as a decoder model if cross attention is added")
             self.crossattention = ResbertAttention(config, position_embedding_type="absolute")
+            self.crossattention.requires_grad_(False)
         self.intermediate = ResbertIntermediate(config)
+        self.intermediate.requires_grad_(False)
         self.output = ResbertOutput(config)
+        self.output.requires_grad_(False)
 
     def forward(
         self,
@@ -542,7 +564,10 @@ class ResbertEncoder(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.layer = nn.ModuleList([ResbertLayer(config) for _ in range(config.num_hidden_layers)])
+        if self.config.reservoir_layers is None:
+            self.layer = nn.ModuleList([BertLayer(config) for _ in range(config.num_hidden_layers)])
+        else:
+            self.layer = nn.ModuleList([ResbertLayer(config) if i in self.config.reservoir_layers else BertLayer(config) for i in range(config.num_hidden_layers)])
         self.gradient_checkpointing = False
 
     def forward(
