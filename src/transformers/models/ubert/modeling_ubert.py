@@ -174,8 +174,6 @@ class EuSN(nn.Module):
         self.epsilon = config.eus_epsilon
         self.gamma = config.eus_gamma
         
-        self.activation = config.eus_activation # check over the type
-
         # recurrent W
         I = torch.eye(self.units)
         W = 2 * self.recurrent_scaling * torch.rand(self.units, self.units) - self.recurrent_scaling
