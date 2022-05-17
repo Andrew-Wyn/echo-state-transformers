@@ -455,7 +455,7 @@ class ResbertOutput(nn.Module):
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
         # random projection to reduce the dimension
-        self.random_projection_matrix = torch.randn(config.hidden_size, self.reservoir_size)/config.hidden_size
+        self.random_projection_matrix = torch.randn(config.hidden_size, self.reservoir_size)/math.sqrt(config.hidden_size)
 
 
     def forward(self, hidden_states: torch.Tensor, input_tensor: torch.Tensor) -> torch.Tensor:
