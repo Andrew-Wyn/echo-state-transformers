@@ -125,7 +125,6 @@ class UbertConfig(PretrainedConfig):
         eus_recurrent_scaling=1,
         eus_epsilon=0.01,
         eus_gamma=0.001,
-        eus_activation=torch.tanh,
         **kwargs
     ):
         super().__init__(pad_token_id=pad_token_id, **kwargs)
@@ -156,7 +155,6 @@ class UbertConfig(PretrainedConfig):
         self.eus_recurrent_scaling = eus_recurrent_scaling
         self.eus_epsilon = eus_epsilon
         self.eus_gamma = eus_gamma
-        self.eus_activation = eus_activation
 
 
 class UbertOnnxConfig(OnnxConfig):

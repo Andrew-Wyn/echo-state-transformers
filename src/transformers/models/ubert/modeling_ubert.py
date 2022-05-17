@@ -191,17 +191,13 @@ class EuSN(nn.Module):
         self.random_projection_matrix = torch.nn.parameter.Parameter(torch.randn(self.input_dim, self.units)/math.sqrt(self.input_dim), requires_grad=False)
       
     def eusn_recurrent(self, inputs, states):
-      
-      input_part = inputs @ self.kernel
+        input_part = inputs @ self.kernel
         
-      state_part = states @ self.recurrent_kernel
+        state_part = states @ self.recurrent_kernel
       
-      if not self.activation is None:
-        output = states + self.epsilon * self.activation(input_part + self.bias + state_part)
-      else:
-        output = states + self.epsilon * (input_part + self.bias + state_part)
+        output = states + self.epsilon * torch.tanh(input_part + self.bias + state_part)
       
-      return output
+        return output
 
     def forward(self, hidden_states,
                     attention_mask=None,
@@ -210,19 +206,19 @@ class EuSN(nn.Module):
                     encoder_attention_mask=None,
                     past_key_value=None,
                     output_attentions=None):
-      # batch size is BatchsizeXSequencelenghtXInputdim
-      out_hidden_states = torch.zeros(hidden_states.shape[0], hidden_states.shape[1], self.input_dim)
+        # batch size is BatchsizeXSequencelenghtXInputdim
+        out_hidden_states = torch.zeros(hidden_states.shape[0], hidden_states.shape[1], self.input_dim)
 
-      curr_hids = torch.zeros(hidden_states.shape[0], self.units)
-      
-      for i in range(hidden_states.shape[1]):
-        curr_inputs = hidden_states[:,i,:]
-        hids_i = self.eusn_recurrent(curr_inputs, curr_hids)
-        curr_hids = hids_i
-        # project back to the dimension of the input
-        out_hidden_states[:,i,:] = hids_i @ self.random_projection_matrix.T
-      
-      return (out_hidden_states, )
+        curr_hids = torch.zeros(hidden_states.shape[0], self.units)
+        
+        for i in range(hidden_states.shape[1]):
+            curr_inputs = hidden_states[:,i,:]
+            hids_i = self.eusn_recurrent(curr_inputs, curr_hids)
+            curr_hids = hids_i
+            # project back to the dimension of the input
+            out_hidden_states[:,i,:] = hids_i @ self.random_projection_matrix.T
+        
+        return (out_hidden_states, )
 
 
 # Copied from transformers.models.bert.modeling_bert.BertEmbeddings with Bert->Ubert
