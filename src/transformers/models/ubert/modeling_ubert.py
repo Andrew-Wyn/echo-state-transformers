@@ -177,13 +177,13 @@ class EuSN(nn.Module):
         # recurrent W
         I = torch.eye(self.units)
         W = 2 * self.recurrent_scaling * torch.rand(self.units, self.units) - self.recurrent_scaling
-        self.recurrent_kernel = (W - torch.transpose(W, 0, 1) - self.gamma * I)
+        self.recurrent_kernel = torch.nn.parameter.Parameter((W - torch.transpose(W, 0, 1) - self.gamma * I), requires_grad=False)
 
         # input W
-        self.kernel = 2 * self.input_scaling * torch.rand(self.input_dim, self.units) - self.input_scaling
+        self.kernel = torch.nn.parameter.Parameter(2 * self.input_scaling * torch.rand(self.input_dim, self.units) - self.input_scaling, requires_grad=False)
 
         # bias
-        self.bias = 2 * self.bias_scaling * torch.rand(self.units) - self.bias_scaling
+        self.bias = torch.nn.parameter.Parameter(2 * self.bias_scaling * torch.rand(self.units) - self.bias_scaling, requires_grad=False)
 
         # random projection to reduce the dimension
         self.random_projection_matrix = torch.nn.parameter.Parameter(torch.randn(self.input_dim, self.units)/math.sqrt(self.input_dim), requires_grad=False)
@@ -204,10 +204,12 @@ class EuSN(nn.Module):
                     encoder_attention_mask=None,
                     past_key_value=None,
                     output_attentions=None):
-        # batch size is BatchsizeXSequencelenghtXInputdim
-        out_hidden_states = torch.zeros(hidden_states.shape[0], hidden_states.shape[1], self.input_dim)
+        device = hidden_states.get_device()
 
-        curr_hids = torch.zeros(hidden_states.shape[0], self.units)
+        # batch size is BatchsizeXSequencelenghtXInputdim
+        out_hidden_states = torch.zeros(hidden_states.shape[0], hidden_states.shape[1], self.input_dim, device=device)
+
+        curr_hids = torch.zeros(hidden_states.shape[0], self.units, device=device)
         
         for i in range(hidden_states.shape[1]):
             curr_inputs = hidden_states[:,i,:]
