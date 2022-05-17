@@ -188,9 +188,8 @@ class EuSN(nn.Module):
         self.bias = 2 * self.bias_scaling * torch.rand(self.units) - self.bias_scaling
 
         # random projection to reduce the dimension
-        self.random_projection_matrix = torch.randn(self.input_dim, self.units)/math.sqrt(self.input_dim)
+        self.random_projection_matrix = torch.nn.parameter.Parameter(torch.randn(self.input_dim, self.units)/math.sqrt(self.input_dim), requires_grad=False)
       
-
     def eusn_recurrent(self, inputs, states):
       
       input_part = inputs @ self.kernel
