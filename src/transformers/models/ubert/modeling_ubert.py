@@ -160,6 +160,72 @@ def load_tf_weights_in_ubert(model, config, tf_checkpoint_path):
     return model
 
 
+class EuSN(nn.Module):
+
+    def __init__(self, config):
+        super(EuSN, self).__init__()
+        
+        self.units = config.eus_input_dim * config.reservoir_scaling_factor
+        self.input_dim = config.eus_input_dim
+        self.input_scaling = config.eus_input_scaling
+        self.bias_scaling = config.eus_bias_scaling
+        self.recurrent_scaling = config.eus_recurrent_scaling
+
+        self.epsilon = config.eus_epsilon
+        self.gamma = config.eus_gamma
+        
+        self.activation = config.eus_activation # check over the type
+
+        # recurrent W
+        I = torch.eye(self.units)
+        W = 2 * self.recurrent_scaling * torch.rand(self.units, self.units) - self.recurrent_scaling
+        self.recurrent_kernel = (W - torch.transpose(W, 0, 1) - self.gamma * I)
+
+        # input W
+        self.kernel = 2 * self.input_scaling * torch.rand(self.input_dim, self.units) - self.input_scaling
+
+        # bias
+        self.bias = 2 * self.bias_scaling * torch.rand(self.units) - self.bias_scaling
+
+        # random projection to reduce the dimension
+        self.random_projection_matrix = torch.randn(self.input_dim, self.units)/math.sqrt(self.input_dim)
+      
+
+    def eusn_recurrent(self, inputs, states):
+      
+      input_part = inputs @ self.kernel
+        
+      state_part = states @ self.recurrent_kernel
+      
+      if not self.activation is None:
+        output = states + self.epsilon * self.activation(input_part + self.bias + state_part)
+      else:
+        output = states + self.epsilon * (input_part + self.bias + state_part)
+      
+      return output
+
+    def forward(self, hidden_states,
+                    attention_mask=None,
+                    layer_head_mask=None,
+                    encoder_hidden_states=None,
+                    encoder_attention_mask=None,
+                    past_key_value=None,
+                    output_attentions=None):
+      # batch size is BatchsizeXSequencelenghtXInputdim
+      out_hidden_states = torch.zeros(hidden_states.shape[0], hidden_states.shape[1], self.input_dim)
+
+      curr_hids = torch.zeros(hidden_states.shape[0], self.units)
+      
+      for i in range(hidden_states.shape[1]):
+        curr_inputs = hidden_states[:,i,:]
+        hids_i = self.eusn_recurrent(curr_inputs, curr_hids)
+        curr_hids = hids_i
+        # project back to the dimension of the input
+        out_hidden_states[:,i,:] = hids_i @ self.random_projection_matrix.T
+      
+      return (out_hidden_states, )
+
+
 # Copied from transformers.models.bert.modeling_bert.BertEmbeddings with Bert->Ubert
 class UbertEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
@@ -542,7 +608,10 @@ class UbertEncoder(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.layer = nn.ModuleList([UbertLayer(config) for _ in range(config.num_hidden_layers)])
+        if config.reservoir_layers is None:
+            self.layer = nn.ModuleList([UbertLayer(config) for _ in range(config.num_hidden_layers)])
+        else:
+            self.layer = nn.ModuleList([EuSN(config) if i in config.reservoir_layers else UbertLayer(config) for i in range(config.num_hidden_layers)])
         self.gradient_checkpointing = False
 
     def forward(
@@ -604,6 +673,7 @@ class UbertEncoder(nn.Module):
                 )
 
             hidden_states = layer_outputs[0]
+
             if use_cache:
                 next_decoder_cache += (layer_outputs[-1],)
             if output_attentions:

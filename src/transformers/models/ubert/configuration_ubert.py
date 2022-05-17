@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ UBERT model configuration"""
+import torch
 from collections import OrderedDict
 from typing import Mapping
 
@@ -96,7 +97,7 @@ class UbertConfig(PretrainedConfig):
     >>> configuration = model.config
     ```"""
     model_type = "ubert"
-
+    # input_dim, units, input_scaling, bias_scaling, recurrent_scaling, epsilon=0.01, gamma=0.001, activation = torch.tanh
     def __init__(
         self,
         vocab_size=30522,
@@ -117,6 +118,14 @@ class UbertConfig(PretrainedConfig):
         position_embedding_type="absolute",
         use_cache=True,
         classifier_dropout=None,
+        # euler state modules parameters
+        eus_input_dim=768,
+        eus_input_scaling=1,
+        eus_bias_scaling=1,
+        eus_recurrent_scaling=1,
+        eus_epsilon=0.01,
+        eus_gamma=0.001,
+        eus_activation=torch.tanh,
         **kwargs
     ):
         super().__init__(pad_token_id=pad_token_id, **kwargs)
@@ -124,6 +133,8 @@ class UbertConfig(PretrainedConfig):
         self.vocab_size = vocab_size
         self.hidden_size = hidden_size
         self.num_hidden_layers = num_hidden_layers
+        self.reservoir_layers = reservoir_layers
+        self.reservoir_scaling_factor = reservoir_scaling_factor
         self.num_attention_heads = num_attention_heads
         self.hidden_act = hidden_act
         self.intermediate_size = intermediate_size
@@ -136,6 +147,16 @@ class UbertConfig(PretrainedConfig):
         self.position_embedding_type = position_embedding_type
         self.use_cache = use_cache
         self.classifier_dropout = classifier_dropout
+
+        # euler state modules parameters
+
+        self.eus_input_dim = eus_input_dim
+        self.eus_input_scaling = eus_input_scaling
+        self.eus_bias_scaling = eus_bias_scaling
+        self.eus_recurrent_scaling = eus_recurrent_scaling
+        self.eus_epsilon = eus_epsilon
+        self.eus_gamma = eus_gamma
+        self.eus_activation = eus_activation
 
 
 class UbertOnnxConfig(OnnxConfig):
