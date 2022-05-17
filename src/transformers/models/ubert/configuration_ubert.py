@@ -29,7 +29,7 @@ UBERT_PRETRAINED_CONFIG_ARCHIVE_MAP = {
 }
 
 
-
+# TODO: update the docstring
 class UbertConfig(PretrainedConfig):
     r"""
     This is the configuration class to store the configuration of a [`UbertModel`] or a [`TFUbertModel`]. It is used to
@@ -102,6 +102,8 @@ class UbertConfig(PretrainedConfig):
         vocab_size=30522,
         hidden_size=768,
         num_hidden_layers=12,
+        reservoir_layers=None,
+        reservoir_scaling_factor=None,
         num_attention_heads=12,
         intermediate_size=3072,
         hidden_act="gelu",
