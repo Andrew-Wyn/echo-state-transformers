@@ -24,11 +24,8 @@ from . import (
     bartpho,
     beit,
     bert,
-<<<<<<< HEAD
     resbert,
-=======
     ubert,
->>>>>>> eb9cc493b (initializated the structure of the model)
     bert_generation,
     bert_japanese,
     bertweet,
