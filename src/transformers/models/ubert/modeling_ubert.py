@@ -165,8 +165,8 @@ class EuSN(nn.Module):
     def __init__(self, config):
         super(EuSN, self).__init__()
         
-        self.units = config.eus_input_dim * config.reservoir_scaling_factor
-        self.input_dim = config.eus_input_dim
+        self.units = config.hidden_size * config.reservoir_scaling_factor
+        self.input_dim = config.hidden_size
         self.input_scaling = config.eus_input_scaling
         self.bias_scaling = config.eus_bias_scaling
         self.recurrent_scaling = config.eus_recurrent_scaling

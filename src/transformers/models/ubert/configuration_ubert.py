@@ -119,7 +119,6 @@ class UbertConfig(PretrainedConfig):
         use_cache=True,
         classifier_dropout=None,
         # euler state modules parameters
-        eus_input_dim=768,
         eus_input_scaling=1,
         eus_bias_scaling=1,
         eus_recurrent_scaling=1,
@@ -148,8 +147,6 @@ class UbertConfig(PretrainedConfig):
         self.classifier_dropout = classifier_dropout
 
         # euler state modules parameters
-
-        self.eus_input_dim = eus_input_dim
         self.eus_input_scaling = eus_input_scaling
         self.eus_bias_scaling = eus_bias_scaling
         self.eus_recurrent_scaling = eus_recurrent_scaling
