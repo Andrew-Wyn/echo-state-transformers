@@ -229,18 +229,24 @@ class ResbertEmbeddings(nn.Module):
 
 # Copied from transformers.models.bert.modeling_bert.BertSelfAttention with Bert->Resbert
 class ResbertSelfAttention(nn.Module):
-    def __init__(self, config, position_embedding_type=None):
+    def __init__(self, config, position_embedding_type=None, reservoir=False):
         super().__init__()
-        self.reservoir_size = (config.hidden_size * config.reservoir_scaling_factor) if config.reservoir_scaling_factor is not None else config.hidden_size
-        if self.reservoir_size % config.num_attention_heads != 0 and not hasattr(config, "embedding_size"):
+        self.reservoir = reservoir
+
+        if self.reservoir:
+            self.out_hidden_size = (config.hidden_size * config.reservoir_scaling_factor) if config.reservoir_scaling_factor is not None else config.hidden_size
+        else:
+            self.out_hidden_size = config.hidden_size
+
+        if self.out_hidden_size % config.num_attention_heads != 0 and not hasattr(config, "embedding_size"):
             raise ValueError(
-                f"The reservoir size ({self.hidden_size}) is not a multiple of the number of attention "
+                f"The self attention output size ({self.out_hidden_size}) is not a multiple of the number of attention "
                 f"heads ({config.num_attention_heads})"
             )
 
-        # TODO: I dont see the utility of this operations self.all_head_size = self.reservoir_size due to previous control
+        # TODO: I dont see the utility of this operations self.all_head_size = self.out_hidden_size due to previous control
         self.num_attention_heads = config.num_attention_heads
-        self.attention_head_size = int(self.reservoir_size / config.num_attention_heads)
+        self.attention_head_size = int(self.out_hidden_size / config.num_attention_heads)
         self.all_head_size = self.num_attention_heads * self.attention_head_size
 
         self.query = nn.Linear(config.hidden_size, self.all_head_size)
@@ -359,12 +365,18 @@ class ResbertSelfAttention(nn.Module):
 
 # Copied from transformers.models.bert.modeling_bert.BertSelfOutput with Bert->Resbert
 class ResbertSelfOutput(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, reservoir=False):
         super().__init__()
-        self.reservoir_size = config.hidden_size * config.reservoir_scaling_factor if not config.reservoir_scaling_factor is None else config.hidden_size
-        self.embed_reservoir = nn.Linear(config.hidden_size, self.reservoir_size)
-        self.dense = nn.Linear(self.reservoir_size, self.reservoir_size)
-        self.LayerNorm = nn.LayerNorm(self.reservoir_size, eps=config.layer_norm_eps)
+        self.reservoir = reservoir
+
+        if self.reservoir:
+            self.out_hidden_size = config.hidden_size * config.reservoir_scaling_factor if not config.reservoir_scaling_factor is None else config.hidden_size
+        else:
+            self.out_hidden_size = config.hidden_size
+
+        self.embed_reservoir = nn.Linear(config.hidden_size, self.out_hidden_size)
+        self.dense = nn.Linear(self.out_hidden_size, self.out_hidden_size)
+        self.LayerNorm = nn.LayerNorm(self.out_hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, hidden_states: torch.Tensor, input_tensor: torch.Tensor) -> torch.Tensor:
@@ -378,10 +390,11 @@ class ResbertSelfOutput(nn.Module):
 
 # Copied from transformers.models.bert.modeling_bert.BertAttention with Bert->Resbert
 class ResbertAttention(nn.Module):
-    def __init__(self, config, position_embedding_type=None):
+    def __init__(self, config, position_embedding_type=None, reservoir=False):
         super().__init__()
-        self.self = ResbertSelfAttention(config, position_embedding_type=position_embedding_type)
-        self.output = ResbertSelfOutput(config)
+        self.reservoir = reservoir
+        self.self = ResbertSelfAttention(config, position_embedding_type=position_embedding_type, reservoir=self.reservoir)
+        self.output = ResbertSelfOutput(config, self.reservoir)
         self.pruned_heads = set()
 
     def prune_heads(self, heads):
@@ -428,10 +441,16 @@ class ResbertAttention(nn.Module):
 
 # Copied from transformers.models.bert.modeling_bert.BertIntermediate with Bert->Resbert
 class ResbertIntermediate(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, reservoir=False):
         super().__init__()
-        self.reservoir_size = config.hidden_size * config.reservoir_scaling_factor if not config.reservoir_scaling_factor is None else config.hidden_size
-        self.dense = nn.Linear(self.reservoir_size, config.intermediate_size)
+        self.reservoir = reservoir
+
+        if self.reservoir:
+            self.out_hidden_size = config.hidden_size * config.reservoir_scaling_factor if not config.reservoir_scaling_factor is None else config.hidden_size
+        else:
+            self.out_hidden_size = config.hidden_size
+
+        self.dense = nn.Linear(self.out_hidden_size, config.intermediate_size)
         if isinstance(config.hidden_act, str):
             self.intermediate_act_fn = ACT2FN[config.hidden_act]
         else:
@@ -445,47 +464,59 @@ class ResbertIntermediate(nn.Module):
 
 # Copied from transformers.models.bert.modeling_bert.BertOutput with Bert->Resbert
 class ResbertOutput(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, reservoir=False):
         super().__init__()
 
-        self.reservoir_size = config.hidden_size * config.reservoir_scaling_factor if not config.reservoir_scaling_factor is None else config.hidden_size
+        self.reservoir = reservoir
 
-        self.dense = nn.Linear(config.intermediate_size, self.reservoir_size)
-        self.LayerNorm = nn.LayerNorm(self.reservoir_size, eps=config.layer_norm_eps)
+        if self.reservoir:
+            self.out_hidden_size = config.hidden_size * config.reservoir_scaling_factor if not config.reservoir_scaling_factor is None else config.hidden_size
+        else:
+            self.out_hidden_size = config.hidden_size
+
+        self.dense = nn.Linear(config.intermediate_size, self.out_hidden_size)
+        self.LayerNorm = nn.LayerNorm(self.out_hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
-        # random projection to reduce the dimension
-        self.random_projection_matrix = torch.nn.parameter.Parameter(torch.randn(config.hidden_size, self.reservoir_size)/math.sqrt(config.hidden_size), requires_grad=False)
+        if self.reservoir:
+            # random projection to reduce the dimension
+            self.random_projection_matrix = torch.nn.parameter.Parameter(torch.randn(config.hidden_size, self.out_hidden_size)/math.sqrt(config.hidden_size), requires_grad=False)
 
     def forward(self, hidden_states: torch.Tensor, input_tensor: torch.Tensor) -> torch.Tensor:
         hidden_states = self.dense(hidden_states)
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
 
-        hidden_states = hidden_states @ self.random_projection_matrix.T
+        if self.reservoir:
+            hidden_states = hidden_states @ self.random_projection_matrix.T
 
         return hidden_states
 
 
 # Copied from transformers.models.bert.modeling_bert.BertLayer with Bert->Resbert
 class ResbertLayer(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, reservoir=False):
         super().__init__()
+        self.reservoir = reservoir
         self.chunk_size_feed_forward = config.chunk_size_feed_forward
         self.seq_len_dim = 1
-        self.attention = ResbertAttention(config)
-        self.attention.requires_grad_(False)
+        self.attention = ResbertAttention(config, reservoir = self.reservoir)
+        if self.reservoir:
+            self.attention.requires_grad_(False)
         self.is_decoder = config.is_decoder
         self.add_cross_attention = config.add_cross_attention
         if self.add_cross_attention:
             if not self.is_decoder:
                 raise ValueError(f"{self} should be used as a decoder model if cross attention is added")
-            self.crossattention = ResbertAttention(config, position_embedding_type="absolute")
-            self.crossattention.requires_grad_(False)
-        self.intermediate = ResbertIntermediate(config)
-        self.intermediate.requires_grad_(False)
-        self.output = ResbertOutput(config)
-        self.output.requires_grad_(False)
+            self.crossattention = ResbertAttention(config, position_embedding_type="absolute", reservoir = self.reservoir)
+            if self.reservoir:
+                self.crossattention.requires_grad_(False)
+        self.intermediate = ResbertIntermediate(config, reservoir = self.reservoir)
+        if self.reservoir:
+            self.intermediate.requires_grad_(False)
+        self.output = ResbertOutput(config, reservoir = self.reservoir)
+        if self.reservoir:
+            self.output.requires_grad_(False)
 
     def forward(
         self,
@@ -564,9 +595,9 @@ class ResbertEncoder(nn.Module):
         super().__init__()
         self.config = config
         if self.config.reservoir_layers is None:
-            self.layer = nn.ModuleList([BertLayer(config) for _ in range(config.num_hidden_layers)])
+            self.layer = nn.ModuleList([ResbertLayer(config) for _ in range(config.num_hidden_layers)])
         else:
-            self.layer = nn.ModuleList([ResbertLayer(config) if i in self.config.reservoir_layers else BertLayer(config) for i in range(config.num_hidden_layers)])
+            self.layer = nn.ModuleList([ResbertLayer(config, reservoir=True) if i in self.config.reservoir_layers else ResbertLayer(config) for i in range(config.num_hidden_layers)])
         self.gradient_checkpointing = False
 
     def forward(
