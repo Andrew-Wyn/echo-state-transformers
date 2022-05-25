@@ -26,6 +26,7 @@ import torch
 import torch.utils.checkpoint
 from packaging import version
 from torch import nn
+import torch.jit as jit
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
 
 from ...activations import ACT2FN
@@ -160,8 +161,7 @@ def load_tf_weights_in_ubert(model, config, tf_checkpoint_path):
     return model
 
 
-class EuSN(nn.Module):
-
+class EuSN(jit.ScriptModule):
     def __init__(self, config):
         super(EuSN, self).__init__()
         
@@ -188,27 +188,30 @@ class EuSN(nn.Module):
         # random projection to reduce the dimension
         self.random_projection_matrix = torch.nn.parameter.Parameter(torch.randn(self.input_dim, self.units)/math.sqrt(self.input_dim), requires_grad=False)
       
+    @jit.script_method
     def eusn_recurrent(self, inputs, states):
-        input_part = inputs @ self.kernel
+        input_part = torch.mm(inputs, self.kernel)
         
-        state_part = states @ self.recurrent_kernel
+        state_part = torch.mm(states, self.recurrent_kernel)
       
         output = states + self.epsilon * torch.tanh(input_part + self.bias + state_part)
       
         return output
 
-    def forward(self, hidden_states,
-                    attention_mask=None,
-                    layer_head_mask=None,
-                    encoder_hidden_states=None,
-                    encoder_attention_mask=None,
-                    past_key_value=None,
-                    output_attentions=None):
-        device = hidden_states.get_device()
+    @jit.script_method
+    def forward(self, hidden_states: torch.Tensor,
+                        attention_mask: Optional[torch.FloatTensor] = None,
+                        head_mask: Optional[torch.FloatTensor] = None,
+                        encoder_hidden_states: Optional[torch.FloatTensor] = None,
+                        encoder_attention_mask: Optional[torch.FloatTensor] = None,
+                        past_key_value: Optional[Tuple[Tuple[torch.FloatTensor]]] = None,
+                        output_attentions: Optional[bool] = False,
+                        ):
+        device = f"cuda:{hidden_states.get_device()}" if hidden_states.get_device() >= 0 else "cpu"
 
         # otherwise error on the allocation of the subsequent tensors into cpu
-        if device < 0:
-            device = "cpu"
+        # if device < 0:
+        #    device = "cpu"
 
         # batch size is BatchsizeXSequencelenghtXInputdim
         reservoir_hidden_states = torch.zeros(hidden_states.shape[0], hidden_states.shape[1], self.units, device=device)
@@ -617,6 +620,8 @@ class UbertEncoder(nn.Module):
         if config.reservoir_layers is None:
             self.layer = nn.ModuleList([UbertLayer(config) for _ in range(config.num_hidden_layers)])
         else:
+            torch._C._jit_set_profiling_executor(False)
+            torch._C._jit_set_profiling_mode(False)
             self.layer = nn.ModuleList([EuSN(config) if i in config.reservoir_layers else UbertLayer(config) for i in range(config.num_hidden_layers)])
         self.gradient_checkpointing = False
 
