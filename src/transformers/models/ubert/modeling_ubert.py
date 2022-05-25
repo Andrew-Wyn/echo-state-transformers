@@ -190,9 +190,16 @@ class EuSN(jit.ScriptModule):
       
     @jit.script_method
     def eusn_recurrent(self, inputs, states):
-        input_part = inputs @ self.kernel
+
+        # super_in = torch.cat(inputs, states, dim=1)
+        # super_mat = torch.cat(self.kernel, self.recurrent_kernel, dim=0)
+
+        # super_op = torch.mm(super_in, super_mat)
+        # input_part, state_part = super_op.chunk(2, 1)
+
+        input_part = torch.mm(inputs, self.kernel)
         
-        state_part = states @ self.recurrent_kernel
+        state_part = torch.mm(states, self.recurrent_kernel)
       
         output = states + self.epsilon * torch.tanh(input_part + self.bias + state_part)
       
