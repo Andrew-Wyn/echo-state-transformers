@@ -206,18 +206,29 @@ class EuSN(nn.Module):
                     output_attentions=None):
         device = hidden_states.get_device()
 
+        # otherwise error on the allocation of the subsequent tensors into cpu
+        if device < 0:
+            device = "cpu"
+
         # batch size is BatchsizeXSequencelenghtXInputdim
-        out_hidden_states = torch.zeros(hidden_states.shape[0], hidden_states.shape[1], self.input_dim, device=device)
+        reservoir_hidden_states = torch.zeros(hidden_states.shape[0], hidden_states.shape[1], self.units, device=device)
 
         curr_hids = torch.zeros(hidden_states.shape[0], self.units, device=device)
         
-        for i in range(hidden_states.shape[1]):
+        for i in range(hidden_states.shape[1]): # have to be done sequentially
             curr_inputs = hidden_states[:,i,:]
             hids_i = self.eusn_recurrent(curr_inputs, curr_hids)
             curr_hids = hids_i
-            # project back to the dimension of the input
-            out_hidden_states[:,i,:] = hids_i @ self.random_projection_matrix.T
-        
+            reservoir_hidden_states[:,i,:] = hids_i
+
+        # project back to the dimension of the input
+        # B = batch size
+        # S = sequence lenght
+        # R = reservoir dimension
+        # I = input dimension
+        # follow the einstein notation
+        out_hidden_states = torch.einsum('BSR, IR -> BSI', reservoir_hidden_states, self.random_projection_matrix)
+
         return (out_hidden_states, )
 
 
