@@ -173,28 +173,28 @@ class EuSN(jit.ScriptModule):
 
         self.epsilon = config.eus_epsilon
         self.gamma = config.eus_gamma
-        
+
         # recurrent W
         I = torch.eye(self.units)
         W = 2 * self.recurrent_scaling * torch.rand(self.units, self.units) - self.recurrent_scaling
-        self.recurrent_kernel = nn.Linear(self.units, self.units, bias=False)
-        self.recurrent_kernel.weight = torch.nn.parameter.Parameter((W - torch.transpose(W, 0, 1) - self.gamma * I), requires_grad=False)
+        self.recurrent_kernel = torch.nn.parameter.Parameter((W - torch.transpose(W, 0, 1) - self.gamma * I), requires_grad=False)
 
         # input W
-        self.kernel = nn.Linear(self.input_dim, self.units)
-        self.kernel.weight = torch.nn.parameter.Parameter(2 * self.input_scaling * torch.rand(self.input_dim, self.units) - self.input_scaling, requires_grad=False)
-        self.kernel.bias = torch.nn.parameter.Parameter(2 * self.bias_scaling * torch.rand(self.units) - self.bias_scaling, requires_grad=False)
+        self.kernel = torch.nn.parameter.Parameter(2 * self.input_scaling * torch.rand(self.input_dim, self.units) - self.input_scaling, requires_grad=False)
+
+        # bias
+        self.bias = torch.nn.parameter.Parameter(2 * self.bias_scaling * torch.rand(self.units) - self.bias_scaling, requires_grad=False)
 
         # random projection to reduce the dimension
         self.random_projection_matrix = torch.nn.parameter.Parameter(torch.randn(self.input_dim, self.units)/math.sqrt(self.input_dim), requires_grad=False)
       
     @jit.script_method
     def eusn_recurrent(self, inputs, states):
-        input_part = self.kernel(inputs)
+        input_part = inputs @ self.kernel
         
-        state_part = self.recurrent_kernel(states)
+        state_part = states @ self.recurrent_kernel
       
-        output = states + self.epsilon * torch.tanh(input_part + state_part)
+        output = states + self.epsilon * torch.tanh(input_part + self.bias + state_part)
       
         return output
 
@@ -214,14 +214,17 @@ class EuSN(jit.ScriptModule):
         #    device = "cpu"
 
         # batch size is BatchsizeXSequencelenghtXInputdim
-        reservoir_hidden_states = torch.zeros(hidden_states.shape[0], hidden_states.shape[1], self.units, device=device)
+        # reservoir_hidden_states = torch.zeros(hidden_states.shape[0], hidden_states.shape[1], self.units, device=device)
+        reservoir_hidden_states = torch.jit.annotate(List[torch.Tensor], [])
 
         curr_hids = torch.zeros(hidden_states.shape[0], self.units, device=device)
         unbinded_hidden_states = hidden_states.unbind(1)
         for i in range(len(unbinded_hidden_states)): # have to be done sequentially
             curr_inputs = unbinded_hidden_states[i]
             curr_hids = self.eusn_recurrent(curr_inputs, curr_hids)
-            reservoir_hidden_states[:,i,:] = curr_hids
+            reservoir_hidden_states += [curr_hids]
+
+        reservoir_hidden_states = torch.stack(reservoir_hidden_states, dim=1)
 
         # project back to the dimension of the input
         # B = batch size
