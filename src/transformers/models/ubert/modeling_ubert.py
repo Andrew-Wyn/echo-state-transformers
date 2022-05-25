@@ -629,8 +629,6 @@ class UbertEncoder(nn.Module):
         if config.reservoir_layers is None:
             self.layer = nn.ModuleList([UbertLayer(config) for _ in range(config.num_hidden_layers)])
         else:
-            torch._C._jit_set_profiling_executor(False)
-            torch._C._jit_set_profiling_mode(False)
             self.layer = nn.ModuleList([EuSN(config) if i in config.reservoir_layers else UbertLayer(config) for i in range(config.num_hidden_layers)])
         self.gradient_checkpointing = False
 
