@@ -217,12 +217,11 @@ class EuSN(jit.ScriptModule):
         reservoir_hidden_states = torch.zeros(hidden_states.shape[0], hidden_states.shape[1], self.units, device=device)
 
         curr_hids = torch.zeros(hidden_states.shape[0], self.units, device=device)
-        
-        for i in range(hidden_states.shape[1]): # have to be done sequentially
-            curr_inputs = hidden_states[:,i,:]
-            hids_i = self.eusn_recurrent(curr_inputs, curr_hids)
-            curr_hids = hids_i
-            reservoir_hidden_states[:,i,:] = hids_i
+        unbinded_hidden_states = hidden_states.unbind(1)
+        for i in range(len(unbinded_hidden_states)): # have to be done sequentially
+            curr_inputs = unbinded_hidden_states[i]
+            curr_hids = self.eusn_recurrent(curr_inputs, curr_hids)
+            reservoir_hidden_states[:,i,:] = curr_hids
 
         # project back to the dimension of the input
         # B = batch size
