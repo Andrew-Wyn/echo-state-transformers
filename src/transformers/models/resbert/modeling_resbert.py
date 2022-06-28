@@ -253,6 +253,13 @@ class ResbertSelfAttention(nn.Module):
         self.key = nn.Linear(config.hidden_size, self.all_head_size)
         self.value = nn.Linear(config.hidden_size, self.all_head_size)
 
+        # If this is a reservoir layer, initialize the projection weights in an orthogonal way (SAXE, 2013)
+        # following sec 3.1 in Reservoir Transformers Kiela et al.
+        if self.reservoir:
+            nn.init.orthogonal_(self.query.weight)
+            nn.init.orthogonal_(self.key.weight)
+            nn.init.orthogonal_(self.value.weight)
+
         self.dropout = nn.Dropout(config.attention_probs_dropout_prob)
         self.position_embedding_type = position_embedding_type or getattr(
             config, "position_embedding_type", "absolute"
@@ -374,7 +381,10 @@ class ResbertSelfOutput(nn.Module):
         else:
             self.out_hidden_size = config.hidden_size
 
-        self.embed_reservoir = nn.Linear(config.hidden_size, self.out_hidden_size)
+        # embed the previous transformer layer dimension into the reservoir dimension
+        if self.reservoir:
+            self.embed_reservoir = nn.Linear(config.hidden_size, self.out_hidden_size)
+
         self.dense = nn.Linear(self.out_hidden_size, self.out_hidden_size)
         self.LayerNorm = nn.LayerNorm(self.out_hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
@@ -382,8 +392,12 @@ class ResbertSelfOutput(nn.Module):
     def forward(self, hidden_states: torch.Tensor, input_tensor: torch.Tensor) -> torch.Tensor:
         hidden_states = self.dense(hidden_states)
         hidden_states = self.dropout(hidden_states)
-        embedded_input = self.embed_reservoir(input_tensor)
-        hidden_states = self.LayerNorm(hidden_states + embedded_input)
+
+        if self.reservoir:
+            embedded_input = self.embed_reservoir(input_tensor)
+            hidden_states = self.LayerNorm(hidden_states + embedded_input)
+        else:
+            hidden_states = self.LayerNorm(hidden_states + input_tensor)
 
         return hidden_states
 
@@ -469,6 +483,8 @@ class ResbertOutput(nn.Module):
 
         self.reservoir = reservoir
 
+        self.need_projection = (not config.reservoir_scaling_factor is None) and config.reservoir_scaling_factor > 1
+
         if self.reservoir:
             self.out_hidden_size = config.hidden_size * config.reservoir_scaling_factor if not config.reservoir_scaling_factor is None else config.hidden_size
         else:
@@ -478,7 +494,7 @@ class ResbertOutput(nn.Module):
         self.LayerNorm = nn.LayerNorm(self.out_hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
-        if self.reservoir:
+        if self.reservoir and self.need_projection:
             # random projection to reduce the dimension
             self.random_projection_matrix = torch.nn.parameter.Parameter(torch.randn(config.hidden_size, self.out_hidden_size)/math.sqrt(config.hidden_size), requires_grad=False)
 
@@ -487,7 +503,7 @@ class ResbertOutput(nn.Module):
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
 
-        if self.reservoir:
+        if self.reservoir and self.need_projection:
             hidden_states = hidden_states @ self.random_projection_matrix.T
 
         return hidden_states
