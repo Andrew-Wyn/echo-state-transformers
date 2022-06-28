@@ -376,13 +376,15 @@ class ResbertSelfOutput(nn.Module):
         super().__init__()
         self.reservoir = reservoir
 
+        self.need_projection = (not config.reservoir_scaling_factor is None) and config.reservoir_scaling_factor > 1
+
         if self.reservoir:
             self.out_hidden_size = config.hidden_size * config.reservoir_scaling_factor if not config.reservoir_scaling_factor is None else config.hidden_size
         else:
             self.out_hidden_size = config.hidden_size
 
         # embed the previous transformer layer dimension into the reservoir dimension
-        if self.reservoir:
+        if self.reservoir and self.need_projection:
             self.embed_reservoir = nn.Linear(config.hidden_size, self.out_hidden_size)
 
         self.dense = nn.Linear(self.out_hidden_size, self.out_hidden_size)
@@ -393,7 +395,7 @@ class ResbertSelfOutput(nn.Module):
         hidden_states = self.dense(hidden_states)
         hidden_states = self.dropout(hidden_states)
 
-        if self.reservoir:
+        if self.reservoir and self.need_projection:
             embedded_input = self.embed_reservoir(input_tensor)
             hidden_states = self.LayerNorm(hidden_states + embedded_input)
         else:
