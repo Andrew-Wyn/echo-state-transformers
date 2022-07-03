@@ -142,6 +142,13 @@ _import_structure = {
         "BertTokenizer",
         "WordpieceTokenizer",
     ],
+    "models.rffnbert": [
+        "RFFNBERT_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "BasicTokenizer",
+        "RFFNBertConfig",
+       
+        "WordpieceTokenizer",
+    ],
     "models.resbert": [
         "RESBERT_PRETRAINED_CONFIG_ARCHIVE_MAP",
         "BasicTokenizer",
@@ -809,6 +816,23 @@ else:
             "BertModel",
             "BertPreTrainedModel",
             "load_tf_weights_in_bert",
+        ]
+    )
+    _import_structure["models.rffnbert"].extend(
+        [
+            "RFFNBERT_PRETRAINED_MODEL_ARCHIVE_LIST",
+            "RFFNBertForMaskedLM",
+            "RFFNBertForMultipleChoice",
+            "RFFNBertForNextSentencePrediction",
+            "RFFNBertForPreTraining",
+            "RFFNBertForQuestionAnswering",
+            "RFFNBertForSequenceClassification",
+            "RFFNBertForTokenClassification",
+            "RFFNBertLayer",
+            "RFFNBertLMHeadModel",
+            "RFFNBertModel",
+            "RFFNBertPreTrainedModel",
+            "load_tf_weights_in_rffnbert",
         ]
     )
     _import_structure["models.resbert"].extend(
@@ -1934,6 +1958,23 @@ else:
             "TFBertPreTrainedModel",
         ]
     )
+    _import_structure["models.rffnbert"].extend(
+        [
+            "TF_RFFNBERT_PRETRAINED_MODEL_ARCHIVE_LIST",
+            "TFRFFNBertEmbeddings",
+            "TFRFFNBertForMaskedLM",
+            "TFRFFNBertForMultipleChoice",
+            "TFRFFNBertForNextSentencePrediction",
+            "TFRFFNBertForPreTraining",
+            "TFRFFNBertForQuestionAnswering",
+            "TFRFFNBertForSequenceClassification",
+            "TFRFFNBertForTokenClassification",
+            "TFRFFNBertLMHeadModel",
+            "TFRFFNBertMainLayer",
+            "TFRFFNBertModel",
+            "TFRFFNBertPreTrainedModel",
+        ]
+    )
     _import_structure["models.resbert"].extend(
         [
             "TF_RESBERT_PRETRAINED_MODEL_ARCHIVE_LIST",
@@ -2484,6 +2525,20 @@ else:
             "FlaxBertPreTrainedModel",
         ]
     )
+    _import_structure["models.rffnbert"].extend(
+        [
+            "FlaxRFFNBertForCausalLM",
+            "FlaxRFFNBertForMaskedLM",
+            "FlaxRFFNBertForMultipleChoice",
+            "FlaxRFFNBertForNextSentencePrediction",
+            "FlaxRFFNBertForPreTraining",
+            "FlaxRFFNBertForQuestionAnswering",
+            "FlaxRFFNBertForSequenceClassification",
+            "FlaxRFFNBertForTokenClassification",
+            "FlaxRFFNBertModel",
+            "FlaxRFFNBertPreTrainedModel",
+        ]
+    )
     _import_structure["models.resbert"].extend(
         [
             "FlaxResbertForCausalLM",
@@ -2737,6 +2792,13 @@ if TYPE_CHECKING:
         BasicTokenizer,
         BertConfig,
         BertTokenizer,
+        WordpieceTokenizer,
+    )
+    from .models.rffnbert import (
+        RFFNBERT_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        BasicTokenizer,
+        RFFNBertConfig,
+       
         WordpieceTokenizer,
     )
     from .models.resbert import (
@@ -3323,6 +3385,21 @@ if TYPE_CHECKING:
             BertModel,
             BertPreTrainedModel,
             load_tf_weights_in_bert,
+        )
+        from .models.rffnbert import (
+            RFFNBERT_PRETRAINED_MODEL_ARCHIVE_LIST,
+            RFFNBertForMaskedLM,
+            RFFNBertForMultipleChoice,
+            RFFNBertForNextSentencePrediction,
+            RFFNBertForPreTraining,
+            RFFNBertForQuestionAnswering,
+            RFFNBertForSequenceClassification,
+            RFFNBertForTokenClassification,
+            RFFNBertLayer,
+            RFFNBertLMHeadModel,
+            RFFNBertModel,
+            RFFNBertPreTrainedModel,
+            load_tf_weights_in_rffnbert,
         )
         from .models.resbert import (
             RESBERT_PRETRAINED_MODEL_ARCHIVE_LIST,
@@ -4264,6 +4341,21 @@ if TYPE_CHECKING:
             TFBertModel,
             TFBertPreTrainedModel,
         )
+        from .models.rffnbert import (
+            TF_RFFNBERT_PRETRAINED_MODEL_ARCHIVE_LIST,
+            TFRFFNBertEmbeddings,
+            TFRFFNBertForMaskedLM,
+            TFRFFNBertForMultipleChoice,
+            TFRFFNBertForNextSentencePrediction,
+            TFRFFNBertForPreTraining,
+            TFRFFNBertForQuestionAnswering,
+            TFRFFNBertForSequenceClassification,
+            TFRFFNBertForTokenClassification,
+            TFRFFNBertLMHeadModel,
+            TFRFFNBertMainLayer,
+            TFRFFNBertModel,
+            TFRFFNBertPreTrainedModel,
+        )
         from .models.blenderbot import (
             TFBlenderbotForConditionalGeneration,
             TFBlenderbotModel,
@@ -4666,6 +4758,18 @@ if TYPE_CHECKING:
             FlaxBertForTokenClassification,
             FlaxBertModel,
             FlaxBertPreTrainedModel,
+        )
+        from .models.rffnbert import (
+            FlaxRFFNBertForCausalLM,
+            FlaxRFFNBertForMaskedLM,
+            FlaxRFFNBertForMultipleChoice,
+            FlaxRFFNBertForNextSentencePrediction,
+            FlaxRFFNBertForPreTraining,
+            FlaxRFFNBertForQuestionAnswering,
+            FlaxRFFNBertForSequenceClassification,
+            FlaxRFFNBertForTokenClassification,
+            FlaxRFFNBertModel,
+            FlaxRFFNBertPreTrainedModel,
         )
         from .models.big_bird import (
             FlaxBigBirdForCausalLM,

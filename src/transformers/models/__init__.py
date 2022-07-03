@@ -24,6 +24,7 @@ from . import (
     bartpho,
     beit,
     bert,
+    rffnbert,
     resbert,
     ubert,
     bert_generation,

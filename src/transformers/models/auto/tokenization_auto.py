@@ -134,6 +134,7 @@ else:
                 ("SqueezeBertTokenizer", "SqueezeBertTokenizerFast" if is_tokenizers_available() else None),
             ),
             ("bert", ("BertTokenizer", "BertTokenizerFast" if is_tokenizers_available() else None)),
+            ("rffnbert", ("BertTokenizer", "BertTokenizerFast" if is_tokenizers_available() else None)),
             ("resbert", ("BertTokenizer", "BertTokenizerFast" if is_tokenizers_available() else None)),
             ("ubert", ("BertTokenizer", "BertTokenizerFast" if is_tokenizers_available() else None)),
             ("openai-gpt", ("OpenAIGPTTokenizer", "OpenAIGPTTokenizerFast" if is_tokenizers_available() else None)),

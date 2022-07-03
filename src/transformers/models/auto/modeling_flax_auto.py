@@ -37,6 +37,7 @@ FLAX_MODEL_MAPPING_NAMES = OrderedDict(
         ("roberta", "FlaxRobertaModel"),
         ("xlm-roberta", "FlaxXLMRobertaModel"),
         ("bert", "FlaxBertModel"),
+        ("rffnbert", "FlaxRFFNBertModel"),
         ("beit", "FlaxBeitModel"),
         ("big_bird", "FlaxBigBirdModel"),
         ("bart", "FlaxBartModel"),
@@ -63,6 +64,7 @@ FLAX_MODEL_FOR_PRETRAINING_MAPPING_NAMES = OrderedDict(
         ("roberta", "FlaxRobertaForMaskedLM"),
         ("xlm-roberta", "FlaxXLMRobertaForMaskedLM"),
         ("bert", "FlaxBertForPreTraining"),
+        ("rffnbert", "FlaxRFFNBertForPreTraining"),
         ("big_bird", "FlaxBigBirdForPreTraining"),
         ("bart", "FlaxBartForConditionalGeneration"),
         ("electra", "FlaxElectraForPreTraining"),
@@ -82,6 +84,7 @@ FLAX_MODEL_FOR_MASKED_LM_MAPPING_NAMES = OrderedDict(
         ("roberta", "FlaxRobertaForMaskedLM"),
         ("xlm-roberta", "FlaxXLMRobertaForMaskedLM"),
         ("bert", "FlaxBertForMaskedLM"),
+        ("rffnbert", "FlaxRFFNBertForMaskedLM"),
         ("big_bird", "FlaxBigBirdForMaskedLM"),
         ("bart", "FlaxBartForConditionalGeneration"),
         ("electra", "FlaxElectraForMaskedLM"),
@@ -128,6 +131,7 @@ FLAX_MODEL_FOR_CAUSAL_LM_MAPPING_NAMES = OrderedDict(
         ("xglm", "FlaxXGLMForCausalLM"),
         ("bart", "FlaxBartForCausalLM"),
         ("bert", "FlaxBertForCausalLM"),
+        ("rffnbert", "FlaxRFFNBertForCausalLM"),
         ("roberta", "FlaxRobertaForCausalLM"),
         ("big_bird", "FlaxBigBirdForCausalLM"),
         ("electra", "FlaxElectraForCausalLM"),
@@ -142,6 +146,7 @@ FLAX_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING_NAMES = OrderedDict(
         ("roberta", "FlaxRobertaForSequenceClassification"),
         ("xlm-roberta", "FlaxXLMRobertaForSequenceClassification"),
         ("bert", "FlaxBertForSequenceClassification"),
+        ("rffnbert", "FlaxRFFNBertForSequenceClassification"),
         ("big_bird", "FlaxBigBirdForSequenceClassification"),
         ("bart", "FlaxBartForSequenceClassification"),
         ("electra", "FlaxElectraForSequenceClassification"),
@@ -158,6 +163,7 @@ FLAX_MODEL_FOR_QUESTION_ANSWERING_MAPPING_NAMES = OrderedDict(
         ("roberta", "FlaxRobertaForQuestionAnswering"),
         ("xlm-roberta", "FlaxXLMRobertaForQuestionAnswering"),
         ("bert", "FlaxBertForQuestionAnswering"),
+        ("rffnbert", "FlaxRFFNBertForQuestionAnswering"),
         ("big_bird", "FlaxBigBirdForQuestionAnswering"),
         ("bart", "FlaxBartForQuestionAnswering"),
         ("electra", "FlaxElectraForQuestionAnswering"),
@@ -174,6 +180,7 @@ FLAX_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING_NAMES = OrderedDict(
         ("roberta", "FlaxRobertaForTokenClassification"),
         ("xlm-roberta", "FlaxXLMRobertaForTokenClassification"),
         ("bert", "FlaxBertForTokenClassification"),
+        ("rffnbert", "FlaxRFFNBertForTokenClassification"),
         ("big_bird", "FlaxBigBirdForTokenClassification"),
         ("electra", "FlaxElectraForTokenClassification"),
         ("roformer", "FlaxRoFormerForTokenClassification"),
@@ -188,6 +195,7 @@ FLAX_MODEL_FOR_MULTIPLE_CHOICE_MAPPING_NAMES = OrderedDict(
         ("roberta", "FlaxRobertaForMultipleChoice"),
         ("xlm-roberta", "FlaxXLMRobertaForMultipleChoice"),
         ("bert", "FlaxBertForMultipleChoice"),
+        ("rffnbert", "FlaxRFFNBertForMultipleChoice"),
         ("big_bird", "FlaxBigBirdForMultipleChoice"),
         ("electra", "FlaxElectraForMultipleChoice"),
         ("roformer", "FlaxRoFormerForMultipleChoice"),
@@ -197,6 +205,7 @@ FLAX_MODEL_FOR_MULTIPLE_CHOICE_MAPPING_NAMES = OrderedDict(
 FLAX_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING_NAMES = OrderedDict(
     [
         ("bert", "FlaxBertForNextSentencePrediction"),
+        ("rffnbert", "FlaxRFFNBertForNextSentencePrediction"),
     ]
 )
 
