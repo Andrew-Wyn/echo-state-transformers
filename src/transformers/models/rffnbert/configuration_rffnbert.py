@@ -102,6 +102,8 @@ class RFFNBertConfig(PretrainedConfig):
         vocab_size=30522,
         hidden_size=768,
         num_hidden_layers=12,
+        reservoir_layers=None,
+        reservoir_scaling_factor=None,
         num_attention_heads=12,
         intermediate_size=3072,
         hidden_act="gelu",
@@ -122,6 +124,8 @@ class RFFNBertConfig(PretrainedConfig):
         self.vocab_size = vocab_size
         self.hidden_size = hidden_size
         self.num_hidden_layers = num_hidden_layers
+        self.reservoir_layers = reservoir_layers
+        self.reservoir_scaling_factor = reservoir_scaling_factor
         self.num_attention_heads = num_attention_heads
         self.hidden_act = hidden_act
         self.intermediate_size = intermediate_size

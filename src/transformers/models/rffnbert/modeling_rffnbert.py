@@ -226,6 +226,59 @@ class RFFNBertEmbeddings(nn.Module):
         return embeddings
 
 
+# TODO: implement reservoir feed forward with randomized projection
+class ReservoirFFNLayer(nn.Module):
+    """
+        Following Reservoir Transformers paper in which is define as example an 
+        architecture in the following way:
+
+        FFN(LayerNorm(previous_layer)) + previous_layer
+    """
+
+    def __init__(self, config):
+        super(ReservoirFFNLayer, self).__init__()
+
+        self.input_dim = config.hidden_size
+        self.reservoir_output_dim = config.hidden_size * config.reservoir_scaling_factor
+
+        self.require_proj = (not config.reservoir_scaling_factor is None) and config.reservoir_scaling_factor > 1
+
+        self.ffn = nn.Linear(self.input_dim, self.reservoir_output_dim)
+        self.layer_norm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
+        
+        if self.require_proj:
+            self.random_projection_matrix = torch.nn.parameter.Parameter(torch.randn(self.input_dim, self.reservoir_output_dim)/math.sqrt(self.input_dim), requires_grad=False)
+
+        # reservoir layer, the components dont learn
+        self.ffn.requires_grad_(False)
+        self.layer_norm.requires_grad_(False)
+
+    def forward(self, hidden_states: torch.Tensor,
+                    attention_mask: Optional[torch.FloatTensor] = None,
+                    head_mask: Optional[torch.FloatTensor] = None,
+                    encoder_hidden_states: Optional[torch.FloatTensor] = None,
+                    encoder_attention_mask: Optional[torch.FloatTensor] = None,
+                    past_key_value: Optional[Tuple[Tuple[torch.FloatTensor]]] = None,
+                    output_attentions: Optional[bool] = False,
+                    ):
+        
+        out_hidden_states = self.ffn(self.layer_norm(hidden_states)) + hidden_states
+
+        print(out_hidden_states.shape)
+
+        if self.require_proj:
+            # project back to the dimension of the input
+            # B = batch size
+            # R = reservoir dimension
+            # I = input dimension
+            # follow the einstein notation
+            out_hidden_states = torch.einsum('BR, IR -> BI', out_hidden_states, self.random_projection_matrix)
+
+            return out_hidden_states
+        else:
+            return (out_hidden_states, )
+
+
 # Copied from transformers.models.bert.modeling_bert.BertSelfAttention with Bert->RFFNBert
 class RFFNBertSelfAttention(nn.Module):
     def __init__(self, config, position_embedding_type=None):
@@ -542,7 +595,7 @@ class RFFNBertEncoder(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.layer = nn.ModuleList([RFFNBertLayer(config) for _ in range(config.num_hidden_layers)])
+        self.layer = nn.ModuleList([ReservoirFFNLayer(config) if i in self.config.reservoir_layers else RFFNBertLayer(config) for i in range(config.num_hidden_layers)])
         self.gradient_checkpointing = False
 
     def forward(
