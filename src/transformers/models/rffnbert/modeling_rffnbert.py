@@ -261,22 +261,22 @@ class ReservoirFFNLayer(nn.Module):
                     past_key_value: Optional[Tuple[Tuple[torch.FloatTensor]]] = None,
                     output_attentions: Optional[bool] = False,
                     ):
-        
-        out_hidden_states = self.ffn(self.layer_norm(hidden_states)) + hidden_states
 
-        print(out_hidden_states.shape)
+        out_hidden_states = self.ffn(self.layer_norm(hidden_states))
 
         if self.require_proj:
             # project back to the dimension of the input
             # B = batch size
+            # S = sequence length
             # R = reservoir dimension
             # I = input dimension
             # follow the einstein notation
-            out_hidden_states = torch.einsum('BR, IR -> BI', out_hidden_states, self.random_projection_matrix)
+            out_hidden_states = torch.einsum('BSR, IR -> BSI', out_hidden_states, self.random_projection_matrix)
 
-            return out_hidden_states
-        else:
-            return (out_hidden_states, )
+        # residual connection
+        out_hidden_states + hidden_states
+
+        return (out_hidden_states, )
 
 
 # Copied from transformers.models.bert.modeling_bert.BertSelfAttention with Bert->RFFNBert
