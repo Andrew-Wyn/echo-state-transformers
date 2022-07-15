@@ -244,7 +244,7 @@ class ReservoirFFNLayer(nn.Module):
         self.require_proj = (not config.reservoir_scaling_factor is None) and config.reservoir_scaling_factor > 1
 
         self.ffn = nn.Linear(self.input_dim, self.reservoir_output_dim)
-        self.layer_norm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
+        self.layer_norm = nn.LayerNorm(self.input_dim, eps=config.layer_norm_eps)
         
         if self.require_proj:
             self.random_projection_matrix = torch.nn.parameter.Parameter(torch.randn(self.input_dim, self.reservoir_output_dim)/math.sqrt(self.input_dim), requires_grad=False)
